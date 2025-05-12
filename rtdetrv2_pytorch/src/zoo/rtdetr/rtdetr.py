@@ -31,8 +31,8 @@ class RTDETR(nn.Module):
         
     def forward(self, x, targets=None):
         x = self.backbone(x)
-        x = self.encoder(x)        
-        x = self.decoder(x, targets)
+        x, pos, memory = self.encoder(x)
+        x, _, _, _ = self.decoder(x, targets)
 
         return x
     

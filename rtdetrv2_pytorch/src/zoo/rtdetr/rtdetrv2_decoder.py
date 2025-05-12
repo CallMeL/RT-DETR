@@ -255,6 +255,7 @@ class TransformerDecoder(nn.Module):
                 memory_mask=None):
         dec_out_bboxes = []
         dec_out_logits = []
+        hs_inters = []
         ref_points_detach = F.sigmoid(ref_points_unact)
 
         output = target
@@ -263,7 +264,7 @@ class TransformerDecoder(nn.Module):
             query_pos_embed = query_pos_head(ref_points_detach)
 
             output = layer(output, ref_points_input, memory, memory_spatial_shapes, attn_mask, memory_mask, query_pos_embed)
-
+            hs_inters.append(output)
             inter_ref_bbox = F.sigmoid(bbox_head[i](output) + inverse_sigmoid(ref_points_detach))
 
             if self.training:
@@ -281,7 +282,7 @@ class TransformerDecoder(nn.Module):
             ref_points = inter_ref_bbox
             ref_points_detach = inter_ref_bbox.detach()
 
-        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits)
+        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits), torch.stack(hs_inters)
 
 
 @register()
@@ -572,7 +573,7 @@ class RTDETRTransformerv2(nn.Module):
             self._get_decoder_input(memory, spatial_shapes, denoising_logits, denoising_bbox_unact)
 
         # decoder
-        out_bboxes, out_logits = self.decoder(
+        out_bboxes, out_logits, hs_inters = self.decoder(
             init_ref_contents,
             init_ref_points_unact,
             memory,
@@ -597,7 +598,7 @@ class RTDETRTransformerv2(nn.Module):
                 out['dn_aux_outputs'] = self._set_aux_loss(dn_out_logits, dn_out_bboxes)
                 out['dn_meta'] = dn_meta
 
-        return out
+        return out, hs_inters, out_bboxes, out_logits
 
 
     @torch.jit.unused
