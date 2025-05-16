@@ -292,7 +292,7 @@ class HybridEncoder(nn.Module):
     def forward(self, feats):
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
-        
+
         # encoder
         if self.num_encoder_layers > 0:
             for i, enc_ind in enumerate(self.use_encoder_idx):
@@ -315,11 +315,12 @@ class HybridEncoder(nn.Module):
             feat_low = proj_feats[idx - 1]
             feat_heigh = self.lateral_convs[len(self.in_channels) - 1 - idx](feat_heigh)
             inner_outs[0] = feat_heigh
-            upsample_feat = F.interpolate(feat_heigh, scale_factor=2., mode='nearest')
-            inner_out = self.fpn_blocks[len(self.in_channels)-1-idx](torch.concat([upsample_feat, feat_low], dim=1))
+            upsample_feat = F.interpolate(feat_heigh, size=feat_low.shape[-2:], mode='nearest')
+            inner_out = self.fpn_blocks[len(self.in_channels) - 1 - idx](torch.cat([upsample_feat, feat_low], dim=1))
             inner_outs.insert(0, inner_out)
 
         outs = [inner_outs[0]]
+        position_embeddings = []
         for idx in range(len(self.in_channels) - 1):
             feat_low = outs[-1]
             feat_height = inner_outs[idx + 1]
@@ -327,4 +328,11 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        return outs, pos_embed, proj_feats[enc_ind]
+        for idx, feat in enumerate(outs):
+            h, w = feat.shape[2:]
+            # Create position embeddings for the output feature maps
+            pos_embed = self.build_2d_sincos_position_embedding(
+                w, h, self.hidden_dim, self.pe_temperature).to(feat.device)
+            position_embeddings.append(pos_embed)
+
+        return outs #, position_embeddings, proj_feats[enc_ind]
