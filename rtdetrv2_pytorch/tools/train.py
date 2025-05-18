@@ -52,6 +52,12 @@ if __name__ == '__main__':
     parser.add_argument('--summary-dir', type=str, help='tensorboard summry')
     parser.add_argument('--test-only', action='store_true', default=False,)
 
+    # * WanDB
+    parser.add_argument('--wandb', action='store_true')
+    parser.add_argument('--project_name', default='RT-DETR')
+    parser.add_argument('--group_name', default='hannah-lin')
+    parser.add_argument('--run_name', default='run_000001')
+
     # priority 1
     parser.add_argument('-u', '--update', nargs='+', help='update yaml config')
 

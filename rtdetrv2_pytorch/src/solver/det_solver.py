@@ -11,7 +11,7 @@ from ..misc import dist_utils, profiler_utils
 
 from ._solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
-
+import wandb
 
 class DetSolver(BaseSolver):
     
@@ -19,6 +19,15 @@ class DetSolver(BaseSolver):
         print("Start training")
         self.train()
         args = self.cfg
+
+        if args.wandb:
+            wandb.init(
+                project=args.project_name,
+                group=args.group_name,
+                name=args.run_name,
+                config=args
+            )
+            wandb.watch(self.model)
 
         n_parameters = sum([p.numel() for p in self.model.parameters() if p.requires_grad])
         print(f'number of trainable parameters: {n_parameters}')

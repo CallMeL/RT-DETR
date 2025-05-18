@@ -71,6 +71,8 @@ class BaseConfig(object):
         self.summary_dir :str = None
         self.device : str = ''
 
+        self.wandb: bool = False
+
     @property
     def model(self, ) -> nn.Module:
         return self._model 
