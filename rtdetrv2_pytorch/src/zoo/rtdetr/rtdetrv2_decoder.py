@@ -598,7 +598,7 @@ class RTDETRTransformerv2(nn.Module):
                 out['dn_aux_outputs'] = self._set_aux_loss(dn_out_logits, dn_out_bboxes)
                 out['dn_meta'] = dn_meta
 
-        return out
+        return out, out_bboxes, out_logits, hs_inters
 
 
     @torch.jit.unused
