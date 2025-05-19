@@ -5,7 +5,8 @@ Train/test script examples
 - `-r path/to/checkpoint`
 - `--amp`
 - `--test-only` 
-
+python torchrun tools/train.py -c configs/rtdetrv2/rtdetrv2_r18vd_120e_coco.yml --wandb --group_name hannahlin --project_name RT-DETR &> train.log 2>&1 &
+tail -f train.log
 
 Export script examples
 - `python tools/export_onnx.py -c path/to/config -r path/to/checkpoint --check`
