@@ -7,11 +7,11 @@ evaluator:
 # num_classes: 365
 # remap_mscoco_category: False
 
-num_classes: 91
-remap_mscoco_category: False
+#num_classes: 91
+#remap_mscoco_category: False
 
-#num_classes: 80
-#remap_mscoco_category: True
+num_classes: 80
+remap_mscoco_category: True
 
 
 train_dataloader: 
