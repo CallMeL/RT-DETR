@@ -328,11 +328,4 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        for idx, feat in enumerate(outs):
-            h, w = feat.shape[2:]
-            # Create position embeddings for the output feature maps
-            pos_embed = self.build_2d_sincos_position_embedding(
-                w, h, self.hidden_dim, self.pe_temperature).to(feat.device)
-            position_embeddings.append(pos_embed)
-
-        return outs #, position_embeddings, proj_feats[enc_ind]
+        return outs, memory#, memory is pos_embed
