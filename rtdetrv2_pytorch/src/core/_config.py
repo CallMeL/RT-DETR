@@ -72,6 +72,9 @@ class BaseConfig(object):
         self.device : str = ''
 
         self.wandb: bool = False
+        self.project_name: str = ''
+        self.group_name: str = ''
+        self.run_name: str = ''
 
     @property
     def model(self, ) -> nn.Module:
