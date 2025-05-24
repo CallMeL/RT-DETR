@@ -294,6 +294,8 @@ class HybridEncoder(nn.Module):
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
 
         # encoder
+        pos_embeds_list = []
+
         if self.num_encoder_layers > 0:
             for i, enc_ind in enumerate(self.use_encoder_idx):
                 h, w = proj_feats[enc_ind].shape[2:]
@@ -305,9 +307,10 @@ class HybridEncoder(nn.Module):
                 else:
                     pos_embed = getattr(self, f'pos_embed{enc_ind}', None).to(src_flatten.device)
 
+                pos_embeds_list.append(pos_embed.reshape(-1, self.hidden_dim, h, w))
                 memory :torch.Tensor = self.encoder[i](src_flatten, pos_embed=pos_embed)
                 proj_feats[enc_ind] = memory.permute(0, 2, 1).reshape(-1, self.hidden_dim, h, w).contiguous()
-
+        pos_embeds_tensor = torch.cat(pos_embeds_list, dim=0)
         # broadcasting and fusion
         inner_outs = [proj_feats[-1]]
         for idx in range(len(self.in_channels) - 1, 0, -1):
@@ -320,7 +323,6 @@ class HybridEncoder(nn.Module):
             inner_outs.insert(0, inner_out)
 
         outs = [inner_outs[0]]
-        position_embeddings = []
         for idx in range(len(self.in_channels) - 1):
             feat_low = outs[-1]
             feat_height = inner_outs[idx + 1]
@@ -328,4 +330,4 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        return outs, memory#, memory is pos_embed
+        return outs, pos_embeds_tensor#, memory is pos_embed
