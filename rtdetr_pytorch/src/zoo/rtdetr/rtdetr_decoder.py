@@ -247,6 +247,7 @@ class TransformerDecoder(nn.Module):
         output = tgt
         dec_out_bboxes = []
         dec_out_logits = []
+        hs_inters = []
         ref_points_detach = F.sigmoid(ref_points_unact)
 
         for i, layer in enumerate(self.layers):
@@ -256,6 +257,7 @@ class TransformerDecoder(nn.Module):
             output = layer(output, ref_points_input, memory,
                            memory_spatial_shapes, memory_level_start_index,
                            attn_mask, memory_mask, query_pos_embed)
+            hs_inters.append(output)
 
             inter_ref_bbox = F.sigmoid(bbox_head[i](output) + inverse_sigmoid(ref_points_detach))
 
@@ -275,7 +277,7 @@ class TransformerDecoder(nn.Module):
             ref_points_detach = inter_ref_bbox.detach(
             ) if self.training else inter_ref_bbox
 
-        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits)
+        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits), torch.stack(hs_inters)
 
 
 @register
@@ -516,7 +518,6 @@ class RTDETRTransformer(nn.Module):
 
 
     def forward(self, feats, targets=None):
-
         # input projection and embedding
         (memory, spatial_shapes, level_start_index) = self._get_encoder_input(feats)
         
@@ -537,7 +538,7 @@ class RTDETRTransformer(nn.Module):
             self._get_decoder_input(memory, spatial_shapes, denoising_class, denoising_bbox_unact)
 
         # decoder
-        out_bboxes, out_logits = self.decoder(
+        out_bboxes, out_logits, hs_inters = self.decoder(
             target,
             init_ref_points_unact,
             memory,
@@ -552,7 +553,11 @@ class RTDETRTransformer(nn.Module):
             dn_out_bboxes, out_bboxes = torch.split(out_bboxes, dn_meta['dn_num_split'], dim=2)
             dn_out_logits, out_logits = torch.split(out_logits, dn_meta['dn_num_split'], dim=2)
 
-        out = {'pred_logits': out_logits[-1], 'pred_boxes': out_bboxes[-1]}
+        out = {
+            'pred_logits': out_logits[-1], 
+            'pred_boxes': out_bboxes[-1],
+            'hs_inters': hs_inters,  # Add intermediate decoder outputs
+        }
 
         if self.training and self.aux_loss:
             out['aux_outputs'] = self._set_aux_loss(out_logits[:-1], out_bboxes[:-1])

@@ -330,4 +330,4 @@ class HybridEncoder(nn.Module):
             out = self.pan_blocks[idx](torch.concat([downsample_feat, feat_height], dim=1))
             outs.append(out)
 
-        return outs, pos_embeds_tensor#, memory is pos_embed
+        return outs, pos_embeds_tensor, memory, proj_feats#, memory is pos_embed
