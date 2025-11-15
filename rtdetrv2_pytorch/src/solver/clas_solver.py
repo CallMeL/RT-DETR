@@ -12,14 +12,23 @@ import torch.nn as nn
 from ..misc import dist_utils
 from ._solver import BaseSolver
 from .clas_engine import train_one_epoch, evaluate
-
+import wandb
 
 class ClasSolver(BaseSolver):
 
     def fit(self, ):
         print("Start training")
         self.train()
-        args = self.cfg 
+        args = self.cfg
+
+        if args.wandb:
+            wandb.init(
+                project=args.project_name,
+                group=args.group_name,
+                name=args.run_name,
+                config=args
+            )
+            wandb.watch(self.model)
 
         n_parameters = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
         print('Number of params:', n_parameters)

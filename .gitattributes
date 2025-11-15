@@ -1,0 +1,2 @@
+rtdetrv2_pytorch/output/rtdetrv2_r18vd_120e_coco/best.pth filter=lfs diff=lfs merge=lfs -text
+rtdetrv2_pytorch/output/**/best.pth filter=lfs diff=lfs merge=lfs -text
